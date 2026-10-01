@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin & Coach Dashboard – FitBuddy</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background: #0c121e; color: #9ca3af; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    tr:hover { background: rgba(255, 255, 255, 0.02); }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon">⚡</div>
+      <span>FitBuddy</span>
+    </a>
+    <div class="nav-links">
+      <a href="/">Generator</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/admin" class="active">Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div>
+        <h1 style="font-size: 2rem; font-weight: 800;">Coach & Admin Dashboard</h1>
+        <p style="color: var(--text-muted);">Manage all registered users, inspect original and updated workout plans, and review user feedback.</p>
+      </div>
+      <div>
+        <span class="badge badge-green" style="font-size: 0.9rem; padding: 0.5rem 1rem;">Total Athletes: {{ total_users }}</span>
+      </div>
+    </div>
+
+    <!-- SEARCH & FILTER BAR -->
+    <div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+      <input type="text" id="adminSearchInput" onkeyup="filterUsersTable()" placeholder="🔍 Search users by name, user ID, or fitness goal..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: #0c121e; color: #fff;">
+    </div>
+
+    <!-- USERS TABLE -->
+    <div class="card" style="overflow-x: auto; padding: 0;">
+      <table id="usersTable">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Name</th>
+            <th>Age / Wt</th>
+            <th>Goal</th>
+            <th>Experience</th>
+            <th>Intensity</th>
+            <th>Plan Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in users %}
+          <tr>
+            <td><code>{{ row.user.user_id }}</code></td>
+            <td style="font-weight: 700;">{{ row.user.name }}</td>
+            <td>{{ row.user.age }}y / {{ row.user.weight }}kg</td>
+            <td><span class="badge badge-blue">{{ row.user.goal }}</span></td>
+            <td>{{ row.user.experience }}</td>
+            <td>{{ row.user.intensity }}</td>
+            <td>
+              {% if "Refined" in row.status %}
+              <span class="badge badge-green">{{ row.status }}</span>
+              {% else %}
+              <span class="badge badge-orange">{{ row.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="/dashboard/{{ row.user.user_id }}" style="color: #38bdf8; text-decoration: none; font-size: 0.85rem; font-weight: 600; margin-right: 0.75rem;">View Plan</a>
+              <button onclick="deleteUser('{{ row.user.user_id }}')" style="background: none; border: none; color: #ef4444; font-size: 0.85rem; cursor: pointer; font-weight: 600;">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function filterUsersTable() {
+      const input = document.getElementById("adminSearchInput");
+      const filter = input.value.toLowerCase();
+      const table = document.getElementById("usersTable");
+      const tr = table.getElementsByTagName("tr");
+
+      for (let i = 1; i < tr.length; i++) {
+        const text = tr[i].textContent || tr[i].innerText;
+        if (text.toLowerCase().indexOf(filter) > -1) {
+          tr[i].style.display = "";
+        } else {
+          tr[i].style.display = "none";
+        }
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm(`Are you sure you want to delete user ${userId}? This will remove their profile and all stored workout plans.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/user/${userId}`, { method: 'DELETE' });
+        if (res.ok) {
+          alert(`User ${userId} deleted successfully.`);
+          location.reload();
+        } else {
+          alert('Failed to delete user.');
+        }
+      } catch (e) {
+        alert('Network error while deleting user.');
+      }
+    }
+  </script>
+</body>
+</html>

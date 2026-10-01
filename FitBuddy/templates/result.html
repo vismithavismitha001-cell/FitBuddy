@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your 7-Day AI Fitness Plan – FitBuddy</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    @media print {
+      .navbar, .no-print, .btn-primary, form { display: none !important; }
+      body { background: #fff !important; color: #000 !important; }
+      .card, .day-card { border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon">⚡</div>
+      <span>FitBuddy</span>
+    </a>
+    <div class="nav-links">
+      <a href="/">New Plan</a>
+      <a href="/dashboard/{{ user.user_id }}">Dashboard</a>
+      <a href="/admin">Coach & Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    {% if message %}
+    <div style="background: rgba(16,185,129,0.2); border: 1px solid #10b981; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; color: #34d399; font-weight: 700;">
+      ✅ {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- USER SUMMARY CARD -->
+    <div class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+      <div>
+        <h2 style="font-size: 1.85rem; font-weight: 800;">{{ user.name }}'s 7-Day AI Plan</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Goal: <strong style="color: #38bdf8;">{{ user.goal }}</strong> &bull;
+          Experience: <strong>{{ user.experience }}</strong> &bull;
+          Intensity: <strong>{{ user.intensity }}</strong> &bull;
+          Equipment: <strong>{{ user.equipment }}</strong> &bull;
+          Duration: <strong>{{ user.workout_duration }}</strong>
+        </p>
+      </div>
+      <div class="no-print" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button onclick="window.print()" class="btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.9rem; background: #334155;">🖨️ Print Plan</button>
+        <a href="/dashboard/{{ user.user_id }}" class="btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;">View in Dashboard</a>
+      </div>
+    </div>
+
+    <!-- PLAN OVERVIEW -->
+    <div class="card" style="border-left: 4px solid var(--accent-green);">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Program Philosophy & Schedule</h3>
+      <p style="margin-bottom: 0.75rem;">{{ plan.overview.summary }}</p>
+      <div style="font-size: 0.9rem; color: var(--text-muted);">
+        <strong>Weekly Split:</strong> {{ plan.overview.weeklySplitDescription }}<br>
+        <strong>Safety Guidance:</strong> {{ plan.overview.safetyGuidance }}
+      </div>
+    </div>
+
+    <!-- 7 DAYS LIST -->
+    <h2 style="font-size: 1.6rem; margin-bottom: 1.25rem; font-weight: 800;">Your 7-Day Workout Breakdown</h2>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      {% for day in plan.days %}
+      <div class="day-card" style="{% if day.isRestDay %}border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.05);{% else %}border-left: 4px solid #10b981;{% endif %}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="font-size: 1.25rem; font-weight: 700;">{{ day.dayName }}: {{ day.focus }}</h3>
+          <div>
+            {% if day.isRestDay %}
+            <span class="badge badge-orange">Recovery / Rest Day</span>
+            {% else %}
+            <span class="badge badge-green">{{ day.estimatedTime }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if day.warmUp and day.warmUp.activities %}
+        <div style="margin-bottom: 0.75rem; font-size: 0.9rem;">
+          <strong style="color: #60a5fa;">🔥 Warm-Up ({{ day.warmUp.duration }}):</strong>
+          <span style="color: var(--text-muted);">{{ day.warmUp.activities | join(', ') }}</span>
+        </div>
+        {% endif %}
+
+        <div>
+          <strong style="font-size: 0.95rem; color: #f3f4f6;">Target Exercises:</strong>
+          {% for ex in day.exercises %}
+          <div class="exercise-item">
+            <div style="display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 0.25rem;">
+              <span>{{ ex.name }}</span>
+              <span style="color: #34d399;">{{ ex.sets }} sets &bull; {{ ex.repsOrDuration }}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+              <span>Target: {{ ex.targetMuscle }} (Rest: {{ ex.restTime }})</span>
+              <span>Equip: {{ ex.equipmentNeeded }}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #94a3b8; font-style: italic; margin-top: 0.25rem;">
+              Coach Cue: "{{ ex.coachingCue }}"
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if day.coolDown and day.coolDown.activities %}
+        <div style="margin-top: 0.75rem; font-size: 0.9rem;">
+          <strong style="color: #a78bfa;">❄️ Cool-Down ({{ day.coolDown.duration }}):</strong>
+          <span style="color: var(--text-muted);">{{ day.coolDown.activities | join(', ') }}</span>
+        </div>
+        {% endif %}
+
+        {% if day.recoveryNote %}
+        <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #fbbf24;">
+          💡 Recovery note: {{ day.recoveryNote }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- NUTRITION TIP SECTION -->
+    {% if nutrition_tip %}
+    <div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.1)); border: 1px solid #10b981;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span style="font-size: 1.5rem;">🥗</span>
+        <h3 style="font-size: 1.4rem; font-weight: 800;">Today's Nutrition & Recovery Tip</h3>
+      </div>
+      <h4 style="font-size: 1.1rem; color: #34d399; margin-bottom: 0.5rem;">{{ nutrition_tip.title }}</h4>
+      <p style="color: #d1d5db; margin-bottom: 1rem;">{{ nutrition_tip.tip }}</p>
+    </div>
+    {% endif %}
+
+    <!-- IMPROVE YOUR PLAN / FEEDBACK -->
+    <div class="card no-print" style="margin-top: 2rem;">
+      <h3 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem;">Improve Your Plan (AI Plan Refinement)</h3>
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">
+        Have constraints or preferences? Tell FitBuddy (e.g., <em>"Add more cardio"</em>, <em>"Make workouts easier"</em>, <em>"I need more rest on weekdays"</em>, <em>"Add flexibility exercises"</em>). Gemini will keep your original plan safe and update this plan for you!
+      </p>
+
+      <form action="/submit-feedback" method="POST">
+        <input type="hidden" name="user_id" value="{{ user.user_id }}">
+        <textarea name="feedback" rows="3" required placeholder="e.g. Add more cardio and make Tuesday exercises gentler on knees..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: #0c121e; color: #fff; margin-bottom: 1rem;"></textarea>
+        <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+          🔄 Update Plan with Feedback
+        </button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

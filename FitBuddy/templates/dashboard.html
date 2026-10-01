@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard – FitBuddy</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon">⚡</div>
+      <span>FitBuddy</span>
+    </a>
+    <div class="nav-links">
+      <a href="/">New Plan</a>
+      <a href="/dashboard" class="active">Dashboard</a>
+      <a href="/admin">Coach & Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    {% if not user %}
+    <div class="card" style="text-align: center; padding: 3rem;">
+      <h2>No Active Fitness Profile Found</h2>
+      <p style="color: var(--text-muted); margin: 1rem 0 1.5rem 0;">Get started by generating your personalized 7-day workout plan.</p>
+      <a href="/" class="btn-primary">Generate First Plan</a>
+    </div>
+    {% else %}
+    <div class="card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-left: 5px solid #10b981;">
+      <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">Welcome back, {{ user.name }}!</h1>
+      <p style="color: var(--text-muted);">
+        User ID: <code>{{ user.user_id }}</code> &bull; Current Goal: <strong style="color: #38bdf8;">{{ user.goal }}</strong> &bull; Experience: <strong>{{ user.experience }}</strong>
+      </p>
+    </div>
+
+    <!-- TABS / PLAN STATUS -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+      <div class="card" style="flex: 1; margin-bottom: 0;">
+        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Active Plan</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #34d399;">
+          {% if updated_plan %}Refined (Version 2){% else %}Original Plan (Version 1){% endif %}
+        </div>
+      </div>
+      <div class="card" style="flex: 1; margin-bottom: 0;">
+        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Weekly Commitment</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #60a5fa;">{{ user.workout_days }} Days &bull; {{ user.workout_duration }}</div>
+      </div>
+      <div class="card" style="flex: 1; margin-bottom: 0;">
+        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Equipment Setup</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #fbbf24;">{{ user.equipment }}</div>
+      </div>
+    </div>
+
+    {% if current_plan %}
+    <!-- CURRENT 7-DAY SUMMARY -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 800;">7-Day Schedule Overview</h2>
+        {% if updated_plan %}
+        <span class="badge badge-blue">Displaying Refined Plan</span>
+        {% else %}
+        <span class="badge badge-green">Displaying Original Plan</span>
+        {% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem;">
+        {% for day in current_plan.days %}
+        <div style="background: #111827; border: 1px solid #1f2937; padding: 0.85rem; border-radius: 8px; text-align: center;">
+          <div style="font-weight: 800; font-size: 0.95rem; color: #9ca3af;">{{ day.dayName }}</div>
+          <div style="font-weight: 700; font-size: 0.85rem; margin: 0.35rem 0; color: #fff;">{{ day.focus }}</div>
+          <div>
+            {% if day.isRestDay %}
+            <span style="font-size: 0.75rem; color: #f59e0b;">Rest Day</span>
+            {% else %}
+            <span style="font-size: 0.75rem; color: #10b981;">{{ day.exercises|length }} exercises</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- PLAN COMPARISON / HISTORY -->
+    {% if updated_plan and original_plan %}
+    <div class="card">
+      <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem;">Plan Evolution History</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        FitBuddy keeps your original baseline safe. When you submitted feedback <em>("{{ plan_record.feedback }}")</em>, Gemini generated an updated split without overwriting your foundation.
+      </p>
+      <div class="grid-cols-2">
+        <div style="background: #111827; padding: 1rem; border-radius: 8px; border: 1px solid #374151;">
+          <h4 style="color: #94a3b8; margin-bottom: 0.5rem;">Original Plan (Day 1 Focus)</h4>
+          <p><strong>{{ original_plan.days[0].focus }}</strong></p>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+            {{ original_plan.overview.summary }}
+          </div>
+        </div>
+        <div style="background: #111827; padding: 1rem; border-radius: 8px; border: 1px solid #10b981;">
+          <h4 style="color: #34d399; margin-bottom: 0.5rem;">Refined Plan (Day 1 Focus)</h4>
+          <p><strong>{{ updated_plan.days[0].focus }}</strong></p>
+          <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem;">
+            {{ updated_plan.overview.changelogNote or updated_plan.overview.summary }}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- NUTRITION TIP -->
+    {% if nutrition_tip %}
+    <div class="card" style="background: #131d2e; border-left: 4px solid #38bdf8;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #38bdf8;">Today's Nutrition Tip</h3>
+      <h4 style="margin: 0.35rem 0;">{{ nutrition_tip.title }}</h4>
+      <p style="color: #cbd5e1; font-size: 0.95rem;">{{ nutrition_tip.tip }}</p>
+    </div>
+    {% endif %}
+
+    <div style="text-align: center; margin-top: 2rem;">
+      <a href="/" class="btn-primary">Generate Another Plan</a>
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>
